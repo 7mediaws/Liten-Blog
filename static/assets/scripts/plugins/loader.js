@@ -154,7 +154,7 @@ $(document).ready(function()
 		}
 	});
 	// jQuery Datables
-	$('.datatable').dataTable ({ "sPaginationType": "full_numbers" });
+	$('.datatable').dataTable ({ "sPaginationType": "full_numbers", "aaSorting" : [] });
 	// JQuery Uniform
 	$("select, input[type='checkbox'], input[type='radio'], input[type='file']").uniform();
 	$("#menu").superfish({ speed: 'fast',delay: 300,autoArrows: false });
