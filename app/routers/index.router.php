@@ -60,7 +60,7 @@ $app->group('', function() use ($app, $orm) {
             ->where('posts.post_status = "publish"')
             ->_and_()
             ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date')
+            ->orderBy('posts.post_date','DESC')
             ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
         $q = $select->find(function($data) {
             $array = [];
@@ -95,7 +95,7 @@ $app->group('', function() use ($app, $orm) {
             ->where('posts.post_status = "publish"')
             ->_and_()
             ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date')
+            ->orderBy('posts.post_date', 'DESC')
             ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
         $q = $select->find(function($data) {
             $array = [];
@@ -150,7 +150,7 @@ $app->group('', function() use ($app, $orm) {
             ->where('posts.post_status = "publish"')
             ->_and_()
             ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date')
+            ->orderBy('posts.post_date', 'DESC')
             ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
         $q = $select->find(function($data) {
             $array = [];
