@@ -10,7 +10,7 @@
             <div class="box two_third"> 
                 <!--Title-->
                 <div class="header">
-                    <h2>Create Post</h2>
+                    <h2>Edit Post</h2>
                 </div>
                 <!--Content-->
                 <div class="content padding">
