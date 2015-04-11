@@ -44,6 +44,12 @@
                             <li><a href="<?= url('/admin/categories/'); ?>">Categories</a></li>
                         </ul>
                     </li>
+                    <li><a href="#"><img alt="pages" class="icon" src="<?= url('/'); ?>static/assets/images/inbox.png"/>Pages</a>
+                        <ul>
+                            <li><a href="<?= url('/admin/pages/'); ?>">Pages</a></li>
+                            <li><a href="<?= url('/admin/page/new/'); ?>">New Page</a></li>
+                        </ul>
+                    </li>
                     <li><a href="<?= url('/admin/plugins/'); ?>"><img alt="plugins" class="icon" src="<?= url('/'); ?>static/assets/images/layout.png"/>Plugins</a></li>
                     <li class="separator"></li>
                 </ul>
@@ -82,6 +88,7 @@
     <script type="text/javascript">
         $(function () {
             $('*[name=post_date]').appendDtpicker();
+            $('*[name=page_date]').appendDtpicker();
         });
         tinymce.init({
             plugins: 'image link',

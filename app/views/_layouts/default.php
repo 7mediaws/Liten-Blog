@@ -27,6 +27,11 @@
             <h1><a href="<?= url('/'); ?>"><?= $app->hook->get_option('blog_title'); ?></a></h1>
 
             <p class="description"><?= $app->hook->get_option('blog_authorbio'); ?></p>
+            <h3>Pages</h3>
+            <ul>
+                <?php get_pages(); ?>
+            </ul>
+            
             <h3>Categories</h3>
             <ul>
                 <?php get_categories(); ?>

@@ -35,6 +35,21 @@ function get_archives()
         }
     });
 }
+
+/**
+ * Retrieves list of pages.
+ */
+function get_pages()
+{
+    $app = \Liten\Liten::getInstance();
+    $pages = $app->inst->db->pages()->select('pages.page_title,pages.page_slug')
+        ->orderBy('pages.page_sort');
+    $q = $pages->find(function($data) {
+        foreach ($data as $d) {
+            echo '<li><a href="' . url('/page/' . $d['page_slug']) . '/">' . $d['page_title'] . '</a></li>';
+        }
+    });
+}
 /**
  * Group router
  */
@@ -71,6 +86,27 @@ $app->group('', function() use ($app, $orm) {
         });
 
         $app->view->display('index/index', [ 'posts' => $q, 'page' => $paginate]);
+    });
+    
+    /**
+     * Pages
+     */
+    $app->get('/page/([a-z0-9_-]+)/', function ($slug) use($app, $orm) {
+
+        $pages = $orm->pages();
+        $select = $pages->select('pages.page_title,pages.page_content')
+            ->where('pages.page_status = "publish"')->_and_()
+            ->where('pages.page_slug = ?', $slug)->_and_()
+            ->where('pages.page_date <= ?', $orm->NOW());
+        $q = $select->find(function($data) {
+            $array = [];
+            foreach ($data as $d) {
+                $array[] = $d;
+            }
+            return $array;
+        });
+
+        $app->view->display('index/page', [ 'page' => $q ]);
     });
 
     /**

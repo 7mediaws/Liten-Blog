@@ -263,6 +263,157 @@ $app->group('/admin', function() use ($app, $orm) {
     });
 
     /**
+     * Show a list of all of our pages in the backend.
+     */
+    $app->get('/pages/', function () use($app, $orm) {
+
+        $pages = $orm->pages();
+        $select = $pages->select('pages.pageID,pages.page_title,pages.page_content')
+            ->select('pages.page_status,pages.page_date,pages.page_slug,pages.last_modified')
+            ->orderBy('pages.page_date', 'DESC');
+        $q = $select->find(function($data) {
+            $array = [];
+            foreach ($data as $d) {
+                $array[] = $d;
+            }
+            return $array;
+        });
+
+        $app->view->display('admin/pages', [ 'data' => $q]);
+    });
+    
+    /**
+     * Before route checks to make sure the logged in
+     * user has the permission to edit a page.
+     */
+    $app->before('GET|POST', '/page/.*', function() {
+        if (!hasPermission('edit_page')) {
+            redirect(url('/admin/'));
+        }
+    });
+
+    /**
+     * Shows the edit form with the requested id.
+     */
+    $app->match('GET|POST', '/page/(\d+)/', function ($id) use($app, $orm) {
+
+        if ($app->req->isPost()) {
+            $page = $orm->pages();
+            $page->page_title = $app->req->_post('page_title');
+            $page->page_content = $app->req->_post('page_content');
+            $page->page_date = $app->req->_post('page_date');
+            $page->page_slug = slugify($app->req->_post('page_title'));
+            $page->page_status = $app->req->_post('page_status');
+            $page->page_sort = (int)$app->req->_post('page_sort');
+            $page->where('pageID = ?', (int)$app->req->_post('pageID'));
+            if ($page->update()) {
+                $app->flash('page_status', '<p class="message valid">The page was updated successfully.</p>');
+            } else {
+                $app->flash('page_status', '<p class="message invalid">The system was unable to update this page.</p>');
+            }
+            redirect($_SERVER['HTTP_REFERER']);
+        }
+
+        if ($app->req->isGet()) {
+
+            $pages = $orm->pages();
+            $select = $pages->select('pages.pageID,pages.page_title,pages.page_content')
+            ->select('pages.page_status,pages.page_date,pages.page_slug,pages.page_sort,pages.last_modified')
+                ->where('pages.pageID = ?', $id);
+            $q = $select->find(function($data) {
+                $array = [];
+                foreach ($data as $d) {
+                    $array[] = $d;
+                }
+                return $array;
+            });
+            foreach ($q as $r) {
+                $title = $r['page_title'];
+            }
+        }
+
+        /**
+         * If the page doesn't exist, then it
+         * is false and a 404 page should be displayed.
+         */
+        if ($q === false) {
+            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+        }
+        /**
+         * If the query is legit, but the
+         * the category does not exist, then a 404
+         * page should be displayed
+         */ elseif (empty($q) === true) {
+            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+        }
+        /**
+         * If we get to this point, then all is well
+         * and it is ok to process the query and print
+         * the results in a jhtml format.
+         */ else {
+            $app->view->display('admin/edit-page', [ 'single' => $q, 'title' => $title]);
+        }
+    });
+    
+    /**
+     * Before route checks to make sure the logged in user
+     * has permission to create a new page.
+     */
+    $app->before('GET|POST', '/page/new/', function() {
+        if (!hasPermission('add_page')) {
+            redirect(url('/admin/'));
+        }
+    });
+    /**
+     * Shows the add new page form.
+     */
+    $app->match('GET|POST', '/page/new/', function () use($app, $orm) {
+
+        if ($app->req->isPost()) {
+            $page = $orm->pages();
+            $page->page_title = $app->req->_post('page_title');
+            $page->page_content = $app->req->_post('page_content');
+            $page->page_slug = unique_slug($app->req->_post('page_title'), 'pages', 'page_slug');
+            $page->page_status = $app->req->_post('page_status');
+            $page->page_sort = (int)$app->req->_post('page_sort');
+            $page->page_date = $app->req->_post('page_date');
+            $page->userID = (int)get_userValue('userID');
+
+            if ($page->save()) {
+                $app->flash('page_status', '<p class="message valid">The page was added successfully.</p>');
+                redirect(url('/admin/page/' . $orm->lastInsertId() . '/'));
+            } else {
+                $app->flash('page_status', '<p class="message invalid">The system was unable to create your new page.</p>');
+                redirect(url('/admin/page/new/'));
+            }
+        }
+        if ($app->req->isGet()) {
+            $app->view->display('admin/new-page');
+        }
+    });
+    
+    /**
+     * Before route checks to make sure the logged in user
+     * is allowed to delete pages.
+     */
+    $app->before('GET', '/page/d/.*', function() {
+        if (!hasPermission('delete_page')) {
+            redirect(url('/admin/'));
+            exit();
+        }
+    });
+
+    $app->get('/page/d/(\d+)/', function($id) use($app, $orm) {
+        $page = $orm->pages()->where('pageID', $id);
+        if ($page->delete()) {
+            $app->flash('page_status', '<p class="message valid">The page was deleted successfully.</p>');
+        } else {
+            $app->flash('page_status', '<p class="message invalid">The system was unable to delete the requested page.</p>');
+        }
+        redirect(url('/admin/pages/'));
+    });
+    
+     /**
      * Show a list of all of our posts in the backend.
      */
     $app->get('/posts/', function () use($app, $orm) {
@@ -272,7 +423,7 @@ $app->group('/admin', function() use ($app, $orm) {
             ->select('posts.post_status,posts.post_date,posts.post_slug,posts.last_modified')
             ->select('cat.catSlug,cat.catName')
             ->_join('categories', 'posts.catID = cat.catID', 'cat')
-            ->orderBy('posts.post_date');
+            ->orderBy('posts.post_date', 'DESC');
         $q = $select->find(function($data) {
             $array = [];
             foreach ($data as $d) {
@@ -306,8 +457,8 @@ $app->group('/admin', function() use ($app, $orm) {
             $post->post_date = $app->req->_post('post_date');
             $post->post_slug = slugify($app->req->_post('post_title'));
             $post->post_status = $app->req->_post('post_status');
-            $post->catID = $app->req->_post('catID');
-            $post->where('postID = ?', $app->req->_post('postID'));
+            $post->catID = (int)$app->req->_post('catID');
+            $post->where('postID = ?', (int)$app->req->_post('postID'));
             if ($post->update()) {
                 $app->flash('post_status', '<p class="message valid">The post was updated successfully.</p>');
             } else {
@@ -395,9 +546,10 @@ $app->group('/admin', function() use ($app, $orm) {
             $post->post_title = $app->req->_post('post_title');
             $post->post_content = $app->req->_post('post_content');
             $post->post_slug = unique_slug($app->req->_post('post_title'), 'posts', 'post_slug');
+            $post->post_status = $app->req->_post('post_status');
             $post->post_date = $app->req->_post('post_date');
-            $post->catID = $app->req->_post('catID');
-            $post->userID = get_userValue('userID');
+            $post->catID = (int)$app->req->_post('catID');
+            $post->userID = (int)get_userValue('userID');
 
             if ($post->save()) {
                 $app->flash('post_status', '<p class="message valid">The post was added successfully.</p>');
@@ -469,7 +621,7 @@ $app->group('/admin', function() use ($app, $orm) {
             $cat = $orm->categories();
             $cat->catName = $app->req->_post('catName');
             $cat->catSlug = unique_slug($app->req->_post('catName'), 'categories', 'catSlug');
-            $cat->where('catID = ?', $app->req->_post('catID'));
+            $cat->where('catID = ?', (int)$app->req->_post('catID'));
 
             if ($cat->save()) {
                 $app->flash('cat_status', '<p class="message valid">The category was updated successfully.</p>');
@@ -495,7 +647,7 @@ $app->group('/admin', function() use ($app, $orm) {
     });
 
     $app->get('/post/d/(\d+)/', function($id) use($app, $orm) {
-        $post = $orm->posts()->where('postID', $id);
+        $post = $orm->posts()->where('postID', (int)$id);
         if ($post->delete()) {
             $app->flash('post_status', '<p class="message valid">The post was deleted successfully.</p>');
         } else {
@@ -517,7 +669,7 @@ $app->group('/admin', function() use ($app, $orm) {
     });
 
     $app->get('/categories/d/(\d+)/', function($id) use($app, $orm) {
-        $cat = $orm->categories()->where('catID', $id);
+        $cat = $orm->categories()->where('catID', (int)$id);
         if ($cat->delete()) {
             $app->flash('cat_status', '<p class="message valid">The category was deleted successfully.</p>');
         } else {
@@ -610,7 +762,7 @@ $app->group('/admin', function() use ($app, $orm) {
                     $user->password = $hasher->hashPassword($app->req->_post('password'));
                 }
             }
-            $user->where('users.userID = ?', get_userValue('userID'));
+            $user->where('users.userID = ?', (int)get_userValue('userID'));
             if ($user->save()) {
                 $app->flash('profile', '<p class="message valid">Your profile was updated.</p>');
             } else {
