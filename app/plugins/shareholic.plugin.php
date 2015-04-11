@@ -110,4 +110,4 @@ function shareholic_share_buttons()
     <?php
 }
 $app->hook->add_action('head', 'embed_shareholic_code', 5);
-$app->hook->add_action('post_content_footer', 'shareholic_share_buttons', 15);
+$app->hook->add_action('post_content_footer', 'shareholic_share_buttons', 1);
