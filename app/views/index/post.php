@@ -18,7 +18,7 @@
 
         <?= _escape($d['post_content']); ?>
 
-        <?php $app->hook->do_action('comment_system_core'); ?>
+        <?php $app->hook->do_action('post_content_footer'); ?>
 
     </div>
 <?php endforeach; ?>

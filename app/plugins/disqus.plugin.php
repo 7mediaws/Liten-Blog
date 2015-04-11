@@ -111,5 +111,5 @@ function disqus_comment_link()
     </script>
     <?php
 }
-$app->hook->add_action('comment_system_core', 'embed_disqus_code', 10);
+$app->hook->add_action('post_content_footer', 'embed_disqus_code', 10);
 $app->hook->add_action('footer', 'disqus_comment_link', 10);
