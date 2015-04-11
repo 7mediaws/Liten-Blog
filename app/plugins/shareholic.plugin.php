@@ -101,6 +101,7 @@ function embed_shareholic_code()
 
 function shareholic_share_buttons()
 {
+    $app = \Liten\Liten::getInstance();
 
     ?>
 
