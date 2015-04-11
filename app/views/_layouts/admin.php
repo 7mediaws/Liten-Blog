@@ -83,6 +83,9 @@
         $(function () {
             $('*[name=post_date]').appendDtpicker();
         });
-        tinymce.init({selector: 'textarea.tinymce'});
+        tinymce.init({
+            plugins: 'image link',
+            selector: 'textarea.tinymce'
+        });
     </script>
 </html>
