@@ -8,7 +8,7 @@ function hasPermission($permKey)
     $id = $app->db->role()
         ->select('role.ID')
         ->_join('user_roles', 'role.ID = b.roleID', 'b')
-        ->where('b.userID = ?', get_userValue('userID'))->_and_()
+        ->where('b.userID = ?', get_userdata('userID'))->_and_()
         ->whereLike('role.permission', "%$permKey%");
     $q = $id->find(function($data) {
         $array = [];
@@ -23,7 +23,7 @@ function hasPermission($permKey)
     return false;
 }
 
-function get_userValue($field)
+function get_userdata($field)
 {
     $app = \Liten\Liten::getInstance();
     $userID = $app->cookies->getSecureCookie('auth_token');
@@ -47,7 +47,7 @@ function isUserLoggedIn()
     $app = \Liten\Liten::getInstance();
 
     $user = $app->db->users()->select('userID')
-        ->where('users.userID = ?', get_userValue('userID'));
+        ->where('users.userID = ?', get_userdata('userID'));
     $q = $user->find(function($data) {
         $array = [];
         foreach ($data as $d) {
@@ -377,7 +377,7 @@ $app->group('/admin', function() use ($app, $orm) {
             $page->page_status = $app->req->_post('page_status');
             $page->page_sort = (int)$app->req->_post('page_sort');
             $page->page_date = $app->req->_post('page_date');
-            $page->userID = (int)get_userValue('userID');
+            $page->userID = (int)get_userdata('userID');
 
             if ($page->save()) {
                 $app->flash('page_status', '<p class="message valid">The page was added successfully.</p>');
@@ -549,7 +549,7 @@ $app->group('/admin', function() use ($app, $orm) {
             $post->post_status = $app->req->_post('post_status');
             $post->post_date = $app->req->_post('post_date');
             $post->catID = (int)$app->req->_post('catID');
-            $post->userID = (int)get_userValue('userID');
+            $post->userID = (int)get_userdata('userID');
 
             if ($post->save()) {
                 $app->flash('post_status', '<p class="message valid">The post was added successfully.</p>');
@@ -741,7 +741,7 @@ $app->group('/admin', function() use ($app, $orm) {
 
         if ($app->req->isPost()) {
             $user = $orm->users()->select('password')
-                ->where('users.userID = ?', get_userValue('userID'));
+                ->where('users.userID = ?', get_userdata('userID'));
             $q = $user->find(function($data) {
                 $array = [];
                 foreach ($data as $d) {
@@ -762,7 +762,7 @@ $app->group('/admin', function() use ($app, $orm) {
                     $user->password = $hasher->hashPassword($app->req->_post('password'));
                 }
             }
-            $user->where('users.userID = ?', (int)get_userValue('userID'));
+            $user->where('users.userID = ?', (int)get_userdata('userID'));
             if ($user->save()) {
                 $app->flash('profile', '<p class="message valid">Your profile was updated.</p>');
             } else {

@@ -19,19 +19,19 @@
                     <div class="content">
                         <div class="field">
                             <label>Username:</label>
-                            <input type="text" class="medium" value="<?= get_userValue('uname'); ?>" readonly="readonly"/>
+                            <input type="text" class="medium" value="<?= get_userdata('uname'); ?>" readonly="readonly"/>
                         </div>
                         <div class="field">
                             <label>First Name:</label>
-                            <input name="fname" type="text" class="medium" value="<?= get_userValue('fname'); ?>" required/>
+                            <input name="fname" type="text" class="medium" value="<?= get_userdata('fname'); ?>" required/>
                         </div>
                         <div class="field">
                             <label>Last Name:</label>
-                            <input name="lname" type="text" class="medium" value="<?= get_userValue('lname'); ?>" required/>
+                            <input name="lname" type="text" class="medium" value="<?= get_userdata('lname'); ?>" required/>
                         </div>
                         <div class="field">
                             <label>Email:</label>
-                            <input name="email" type="text" class="medium" value="<?= get_userValue('email'); ?>" required/>
+                            <input name="email" type="text" class="medium" value="<?= get_userdata('email'); ?>" required/>
                         </div>
                         <div class="field">
                             <label>Current Password:</label>
