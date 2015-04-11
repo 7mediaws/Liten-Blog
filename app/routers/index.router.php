@@ -28,7 +28,7 @@ function get_archives()
     $app = \Liten\Liten::getInstance();
     $archives = $app->inst->db->posts()->select('YEAR(posts.post_date) as archive')
         ->groupBy('YEAR(posts.post_date)')
-        ->orderBy('YEAR(posts.post_date)');
+        ->orderBy('YEAR(posts.post_date)', 'DESC');
     $q = $archives->find(function($data) {
         foreach ($data as $d) {
             echo '<li><a href="' . url('/' . $d['archive']) . '/">' . $d['archive'] . '</a></li>';
