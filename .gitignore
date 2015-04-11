@@ -1,0 +1,4 @@
+.DS_Store 
+app/tmp/logs/*.txt
+/nbproject/
+config.php
