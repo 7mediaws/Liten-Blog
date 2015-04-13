@@ -97,9 +97,9 @@ class Hooks
      * @access public
      * @since 1.0.1
      */
-    public function __construct($plugins_dir)
+    public function __construct($plugins_dir, \Liten\Liten $liten = null)
     {
-        $this->_app = \Liten\Liten::getInstance();
+        $this->_app = !empty($liten) ? $liten : \Liten\Liten::getInstance();
         $this->_plugins_dir = $plugins_dir;
     }
 
