@@ -105,8 +105,30 @@ $app->group('', function() use ($app, $orm) {
             }
             return $array;
         });
-
-        $app->view->display('index/page', [ 'page' => $q ]);
+        
+         /**
+         * If the category doesn't exist, then it
+         * is false and a 404 page should be displayed.
+         */
+        if ($q === false) {
+            $app->res->_format('html', 404);
+            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+        }
+        /**
+         * If the query is legit, but the
+         * the category does not exist, then a 404
+         * page should be displayed
+         */ elseif (empty($q) === true) {
+            $app->res->_format('html', 404);
+            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+        }
+        /**
+         * If we get to this point, then all is well
+         * and it is ok to process the query and print
+         * the results in a html format.
+         */ else {
+            $app->view->display('index/page', [ 'page' => $q ]);
+         }
     });
 
     /**
@@ -142,23 +164,25 @@ $app->group('', function() use ($app, $orm) {
         });
 
         /**
-         * If the category doesn't exist, then it
+         * If the archive doesn't exist, then it
          * is false and a 404 page should be displayed.
          */
         if ($q === false) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**
          * If the query is legit, but the
-         * the category does not exist, then a 404
+         * the archive does not exist, then a 404
          * page should be displayed
          */ elseif (empty($q) === true) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**
          * If we get to this point, then all is well
          * and it is ok to process the query and print
-         * the results in a jhtml format.
+         * the results in a html format.
          */ else {
             $app->view->display('index/archives', [ 'archives' => $q, 'title' => $archive . ' Archives', 'page' => $paginate]);
         }
@@ -204,6 +228,7 @@ $app->group('', function() use ($app, $orm) {
          * is false and a 404 page should be displayed.
          */
         if ($q === false) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**
@@ -211,12 +236,13 @@ $app->group('', function() use ($app, $orm) {
          * the category does not exist, then a 404
          * page should be displayed
          */ elseif (empty($q) === true) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**
          * If we get to this point, then all is well
          * and it is ok to process the query and print
-         * the results in a jhtml format.
+         * the results in a html format.
          */ else {
             $app->view->display('index/category', [ 'postscat' => $q, 'title' => $title, 'page' => $paginate]);
         }
@@ -256,6 +282,7 @@ $app->group('', function() use ($app, $orm) {
          * is false and a 404 page should be displayed.
          */
         if ($q === false) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**
@@ -263,6 +290,7 @@ $app->group('', function() use ($app, $orm) {
          * category and post don't exist, then a 404
          * page should be displayed.
          */ elseif (empty($q) === true) {
+            $app->res->_format('html', 404);
             $app->view->display('error/404', [ 'title' => '404 Not Found']);
         }
         /**

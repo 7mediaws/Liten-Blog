@@ -15,7 +15,7 @@
         <!--jQuery Uniform-->
         <link href="<?= url('/'); ?>static/assets/scripts/plugins/jquery-uniform/css/uniform.default.css" rel="stylesheet" type="text/css">
         <link href="<?= url('/'); ?>static/assets/styles/jquery.simple-dtpicker.css" rel="stylesheet" type="text/css">
-
+        <?php $app->hook->do_action('admin_head'); ?>
     </head>
 
     <body class="">
@@ -68,31 +68,30 @@
             <!--End .container--> 
         </div>
         <!--End #content-->
+        <!--Scripts-->
 
+        <!--jQuery-->
+        <script src="http://code.jquery.com/jquery-1.11.2.min.js" type="text/javascript"></script>
+        <script src="<?= url('/'); ?>static/assets/scripts/plugins/jquery.simple-dtpicker.js" type="text/javascript"></script>
+        <script src="<?= url('/'); ?>static/assets/scripts/plugins/superfish.js" type="text/javascript"></script>
+        <!--jQuery Uniform-->
+        <script src="<?= url('/'); ?>static/assets/scripts/plugins/jquery-uniform/jquery.uniform.min.js" type="text/javascript"></script>
+        <!--jQuery Datatables-->
+        <script src="http://cdn.datatables.net/1.10.6/js/jquery.dataTables.min.js" type="text/javascript"></script>
+        <!--Script Loader-->
+        <script src="<?= url('/'); ?>static/assets/scripts/plugins/loader.js" type="text/javascript"></script>
+        <script src="//tinymce.cachefly.net/4.1/tinymce.min.js" type="text/javascript"></script>
+
+        <script type="text/javascript">
+            $(function () {
+                $('*[name=post_date]').appendDtpicker();
+                $('*[name=page_date]').appendDtpicker();
+            });
+            tinymce.init({
+                plugins: 'image link',
+                selector: 'textarea.tinymce'
+            });
+        </script>
+        <?php $app->hook->do_action('admin_footer'); ?>
     </body>
-
-    <!--Scripts-->
-    
-    <!--jQuery-->
-    <script src="http://code.jquery.com/jquery-1.11.2.min.js" type="text/javascript"></script>
-    <script src="<?= url('/'); ?>static/assets/scripts/plugins/jquery.simple-dtpicker.js" type="text/javascript"></script>
-    <script src="<?= url('/'); ?>static/assets/scripts/plugins/superfish.js" type="text/javascript"></script>
-    <!--jQuery Uniform-->
-    <script src="<?= url('/'); ?>static/assets/scripts/plugins/jquery-uniform/jquery.uniform.min.js" type="text/javascript"></script>
-    <!--jQuery Datatables-->
-    <script src="http://cdn.datatables.net/1.10.6/js/jquery.dataTables.min.js" type="text/javascript"></script>
-    <!--Script Loader-->
-    <script src="<?= url('/'); ?>static/assets/scripts/plugins/loader.js" type="text/javascript"></script>
-    <script src="//tinymce.cachefly.net/4.1/tinymce.min.js" type="text/javascript"></script>
-
-    <script type="text/javascript">
-        $(function () {
-            $('*[name=post_date]').appendDtpicker();
-            $('*[name=page_date]').appendDtpicker();
-        });
-        tinymce.init({
-            plugins: 'image link',
-            selector: 'textarea.tinymce'
-        });
-    </script>
 </html>

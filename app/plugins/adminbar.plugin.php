@@ -3,113 +3,95 @@ if (!defined('BASE_PATH'))
     exit('No direct script access allowed');
 
 /*
-  Plugin Name: Disqus Commenting System
+  Plugin Name: Admin Bar
   Plugin URI: http://github.com/
   Version: 1.0.0
-  Description: Adds the ability to use Disqus as the commenting system.
+  Description: Activate to show an admin bar at the top of the site when a user is logged in.
   Author: Joshua Parker
   Author URI: http://www.7mediaws.org/
-  Plugin Slug: disqus
+  Plugin Slug: adminbar
  */
 
 $app = \Liten\Liten::getInstance();
 
-$app->hook->add_action('admin_menu', 'disqus_page', 10);
-
-function disqus_page()
+function adminbar_css_stylesheet()
 {
     $app = \Liten\Liten::getInstance();
-    // parameters: page slug, page title, and function that will display the page itself
-    $app->hook->register_admin_page('disqus', 'Disqus', 'disqus_do_page');
-}
+    if (isUserLoggedIn()) {
 
-function disqus_do_page()
-{
-    $app = \Liten\Liten::getInstance();
-    $options = [ 'disqus_shortname'];
+        ?>
+        <style>
+            /* Utility Bar
+        --------------------------------------------- */
 
-    if ($_POST) {
-        foreach ($options as $option_name) {
-            if (!isset($_POST[$option_name]))
-                continue;
-            $value = $_POST[$option_name];
-            $app->hook->update_option($option_name, $value);
-        }
+            .utility-bar .wrap {
+                width: 1140px;
+                margin: auto;
+            }
 
-        // Update more options here
-        $app->hook->do_action('update_options');
+            .utility-bar {
+                background-color: #333;
+                border-bottom: 1px solid #ddd;
+                color: #ddd;
+                font-size:.9em;
+                padding: 10px 0;
+                padding: 1.5em;
+            }
+
+            .utility-bar a {
+                color: #FFF;
+            }
+
+            .utility-bar a:hover {
+                text-decoration: underline;
+            }
+
+            .utility-bar-left,
+            .utility-bar-right {
+                width: 50%;
+            }
+
+            .utility-bar-left p,
+            .utility-bar-right p {
+                margin-bottom: 0;
+            }
+
+            .utility-bar-left {
+                float: left;
+            }
+
+            .utility-bar-right {
+                float: right;
+                text-align: right;
+            }
+
+            .utility-bar input[type="search"] {
+                background: inherit;
+                padding: 10px 0 0;
+                padding: 1.0em 0 0;
+            }
+        </style>
+        <?php
     }
+}
 
-    ?>
+function adminbar_div()
+{
+    $app = \Liten\Liten::getInstance();
+    if (isUserLoggedIn()) {
 
-    <div class="container clearfix">
-        <form name="form" method="post" action="<?= url('/admin/options/?page=disqus'); ?>">
-            <div class="box"> 
-                <!--Title-->
-                <div class="header">
-                    <h2>Disqus Comment System</h2>
-                </div>
-                <!--Content-->
-                <div class="content padding">
-                    <div class="accordion">
-                        <div class="content">
-                            <div class="field">
-                                <label>Disqus Shortname:</label>
-                                <input name="disqus_shortname" type="text" class="medium" value="<?= _h($app->hook->get_option('disqus_shortname')); ?>" required/>
-                            </div>
-                            <button type="submit" name="Submit">Update Settings</button>
-                        </div>
-                    </div>
-                </div>
+        ?>
+        <div class="utility-bar">
+            <div class="wrap">
+                <div class="utility-bar-left"><a href="<?= url('/admin/'); ?>">Dashboard</a></div>
+                <div class="utility-bar-right">Howdy, <a href="<?= url('/admin/profile/'); ?>"><?= get_userdata('fname'); ?></a></div>
             </div>
-        </form>
-    </div>
-    <?php
+        </div>
+        <?php
+    }
 }
+//$app->hook->add_action('admin_head', 'adminbar_css_stylesheet', 10);
+$app->hook->add_action('head', 'adminbar_css_stylesheet', 10);
+//$app->hook->add_action('admin_footer', 'adminbar_div', 10);
+$app->hook->add_action('footer', 'adminbar_div', 10);
 
-function embed_disqus_code()
-{
-    $app = \Liten\Liten::getInstance();
-
-    ?>
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-        /* * * CONFIGURATION VARIABLES * * */
-        var disqus_shortname = '<?= $app->hook->get_option('disqus_shortname'); ?>';
-
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function () {
-            var dsq = document.createElement('script');
-            dsq.type = 'text/javascript';
-            dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-
-    <?php
-}
-
-function disqus_comment_link()
-{
-    $app = \Liten\Liten::getInstance();
-
-    ?>
-    <script type="text/javascript">
-        /* * * CONFIGURATION VARIABLES * * */
-        var disqus_shortname = '<?= $app->hook->get_option('disqus_shortname'); ?>';
-
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function () {
-            var s = document.createElement('script');
-            s.async = true;
-            s.type = 'text/javascript';
-            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-        }());
-    </script>
-    <?php
-}
-$app->hook->add_action('post_content_footer', 'embed_disqus_code', 10);
-$app->hook->add_action('footer', 'disqus_comment_link', 10);

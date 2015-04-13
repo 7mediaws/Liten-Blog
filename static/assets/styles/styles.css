@@ -1071,7 +1071,6 @@ body.altlayout {
  padding: 0px;
  float: none;
  position: relative;
- background-image: ;
  background: url(../images/bg_sep.png) repeat-x top center;
 }
 .altlayout #navigation li a {
@@ -1079,7 +1078,7 @@ body.altlayout {
  display: block;
 }
 .altlayout #navigation li.current {
-background: url(../images/bg_active.png) repeat-x; top center;
+background: url(../images/bg_active.png) repeat-x top center;
 }
 .altlayout #navigation li a.current {
  background: url(../images/layout2/active.png) no-repeat right center;

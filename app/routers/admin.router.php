@@ -38,7 +38,7 @@ function get_userdata($field)
         return $array;
     });
     foreach ($q as $r) {
-        return $r[$field];
+        return _h($r[$field]);
     }
 }
 
