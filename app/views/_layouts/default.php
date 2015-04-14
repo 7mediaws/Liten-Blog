@@ -41,6 +41,11 @@
             <ul>
                 <?php get_archives(); ?>
             </ul>
+            
+            <h3>&nbsp;</h3>
+            <ul>
+                <li><a href="<?=url('/rss/');?>" style="background-color: #FFF;"><img src="<?=url('/');?>static/assets/images/rss.png" alt="rss feed" /></a></li>
+            </ul>
 
             <p class="author"><?= _escape($app->hook->get_option('blog_description')); ?></p>
 

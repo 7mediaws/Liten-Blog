@@ -51,254 +51,283 @@ function get_pages()
     });
 }
 /**
- * Group router
+ * Blog root
  */
-$app->group('', function() use ($app, $orm) {
+$app->get('/', function () use($app, $orm) {
 
-    /**
-     * Blog root
-     */
-    $app->get('/', function () use($app, $orm) {
+    $records_per_page = $app->hook->get_option('num_posts');
+    $paginate = new \app\src\Paginate();
 
-        $records_per_page = $app->hook->get_option('num_posts');
-        $paginate = new \app\src\Paginate();
+    $rows = $orm->posts()->count('postID');
+    $paginate->records($rows);
+    $paginate->records_per_page($records_per_page);
 
-        $rows = $orm->posts()->count('postID');
-        $paginate->records($rows);
-        $paginate->records_per_page($records_per_page);
+    $posts = $orm->posts();
+    $select = $posts->select('posts.post_title,posts.post_content')
+        ->select('posts.post_date,posts.post_slug')
+        ->select('cat.catSlug,cat.catName')
+        ->_join('categories', 'posts.catID = cat.catID', 'cat')
+        ->where('posts.post_status = "publish"')
+        ->_and_()
+        ->where('posts.post_date <= ?', $orm->NOW())
+        ->orderBy('posts.post_date', 'DESC')
+        ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
+        }
+        return $array;
+    });
 
-        $posts = $orm->posts();
-        $select = $posts->select('posts.post_title,posts.post_content')
-            ->select('posts.post_date,posts.post_slug')
-            ->select('cat.catSlug,cat.catName')
-            ->_join('categories', 'posts.catID = cat.catID', 'cat')
-            ->where('posts.post_status = "publish"')
-            ->_and_()
-            ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date','DESC')
-            ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
-        $q = $select->find(function($data) {
-            $array = [];
-            foreach ($data as $d) {
-                $array[] = $d;
-            }
-            return $array;
-        });
+    $app->view->display('index/index', [ 'posts' => $q, 'page' => $paginate]);
+});
 
-        $app->view->display('index/index', [ 'posts' => $q, 'page' => $paginate]);
+/**
+ * RSS
+ */
+$app->get('/rss/', function() use ($app, $orm) {
+
+    $posts = $orm->posts();
+    $select = $posts->select('posts.post_title,posts.post_content')
+        ->select('posts.post_date,posts.post_slug')
+        ->select('cat.catSlug,cat.catName')
+        ->_join('categories', 'posts.catID = cat.catID', 'cat')
+        ->where('posts.post_status = "publish"')
+        ->_and_()
+        ->where('posts.post_date <= ?', $orm->NOW())
+        ->orderBy('posts.post_date','DESC')
+        ->limit(10);
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
+        }
+        return $array;
     });
     
-    /**
-     * Pages
-     */
-    $app->get('/page/([a-z0-9_-]+)/', function ($slug) use($app, $orm) {
-
-        $pages = $orm->pages();
-        $select = $pages->select('pages.page_title,pages.page_content')
-            ->where('pages.page_status = "publish"')->_and_()
-            ->where('pages.page_slug = ?', $slug)->_and_()
-            ->where('pages.page_date <= ?', $orm->NOW());
-        $q = $select->find(function($data) {
-            $array = [];
-            foreach ($data as $d) {
-                $array[] = $d;
-            }
-            return $array;
-        });
+    if (empty($q) === true) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    
+    else {
+        $app->res->_format('xml');
+        $app->view->display('rss/index', [ 'rss' => $q ]);
+    }
         
-         /**
-         * If the category doesn't exist, then it
-         * is false and a 404 page should be displayed.
-         */
-        if ($q === false) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+});
+
+/**
+ * Pages
+ */
+$app->get('/page/([a-z0-9_-]+)/', function ($slug) use($app, $orm) {
+
+    $pages = $orm->pages();
+    $select = $pages->select('pages.page_title,pages.page_content')
+        ->where('pages.page_status = "publish"')->_and_()
+        ->where('pages.page_slug = ?', $slug)->_and_()
+        ->where('pages.page_date <= ?', $orm->NOW());
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
         }
-        /**
-         * If the query is legit, but the
-         * the category does not exist, then a 404
-         * page should be displayed
-         */ elseif (empty($q) === true) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
-        }
-        /**
-         * If we get to this point, then all is well
-         * and it is ok to process the query and print
-         * the results in a html format.
-         */ else {
-            $app->view->display('index/page', [ 'page' => $q ]);
-         }
+        return $array;
     });
 
     /**
-     * Retrieves posts based on the requested archive year.
+     * If the category doesn't exist, then it
+     * is false and a 404 page should be displayed.
      */
-    $app->get('/(\d+)/', function ($archive) use($app, $orm) {
+    if ($q === false) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If the query is legit, but the
+     * the category does not exist, then a 404
+     * page should be displayed
+     */ elseif (empty($q) === true) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If we get to this point, then all is well
+     * and it is ok to process the query and print
+     * the results in a html format.
+     */ else {
+        $app->view->display('index/page', [ 'page' => $q]);
+    }
+});
 
-        $records_per_page = $app->hook->get_option('num_posts');
-        $paginate = new \app\src\Paginate();
+/**
+ * Retrieves posts based on the requested archive year.
+ */
+$app->get('/(\d+)/', function ($archive) use($app, $orm) {
 
-        $rows = $orm->posts()->count('postID');
-        $paginate->records($rows);
-        $paginate->records_per_page($records_per_page);
+    $records_per_page = $app->hook->get_option('num_posts');
+    $paginate = new \app\src\Paginate();
 
-        $posts = $orm->posts();
-        $select = $posts->select('posts.post_title,posts.post_content')
-            ->select('posts.post_date,posts.post_slug')
-            ->select('cat.catSlug,cat.catName')
-            ->_join('categories', 'posts.catID = cat.catID', 'cat')
-            ->where('YEAR(posts.post_date) = ?', $archive)
-            ->_and_()
-            ->where('posts.post_status = "publish"')
-            ->_and_()
-            ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date', 'DESC')
-            ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
-        $q = $select->find(function($data) {
-            $array = [];
-            foreach ($data as $d) {
-                $array[] = $d;
-            }
-            return $array;
-        });
+    $rows = $orm->posts()->count('postID');
+    $paginate->records($rows);
+    $paginate->records_per_page($records_per_page);
 
-        /**
-         * If the archive doesn't exist, then it
-         * is false and a 404 page should be displayed.
-         */
-        if ($q === false) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    $posts = $orm->posts();
+    $select = $posts->select('posts.post_title,posts.post_content')
+        ->select('posts.post_date,posts.post_slug')
+        ->select('cat.catSlug,cat.catName')
+        ->_join('categories', 'posts.catID = cat.catID', 'cat')
+        ->where('YEAR(posts.post_date) = ?', $archive)
+        ->_and_()
+        ->where('posts.post_status = "publish"')
+        ->_and_()
+        ->where('posts.post_date <= ?', $orm->NOW())
+        ->orderBy('posts.post_date', 'DESC')
+        ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
         }
-        /**
-         * If the query is legit, but the
-         * the archive does not exist, then a 404
-         * page should be displayed
-         */ elseif (empty($q) === true) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
-        }
-        /**
-         * If we get to this point, then all is well
-         * and it is ok to process the query and print
-         * the results in a html format.
-         */ else {
-            $app->view->display('index/archives', [ 'archives' => $q, 'title' => $archive . ' Archives', 'page' => $paginate]);
-        }
+        return $array;
     });
 
     /**
-     * Retrieves posts based on the category selected.
+     * If the archive doesn't exist, then it
+     * is false and a 404 page should be displayed.
      */
-    $app->get('/([a-z0-9_-]+)/', function ($category) use($app, $orm) {
+    if ($q === false) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If the query is legit, but the
+     * the archive does not exist, then a 404
+     * page should be displayed
+     */ elseif (empty($q) === true) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If we get to this point, then all is well
+     * and it is ok to process the query and print
+     * the results in a html format.
+     */ else {
+        $app->view->display('index/archives', [ 'archives' => $q, 'title' => $archive . ' Archives', 'page' => $paginate]);
+    }
+});
 
-        $records_per_page = $app->hook->get_option('num_posts');
-        $paginate = new \app\src\Paginate();
+/**
+ * Retrieves posts based on the category selected.
+ */
+$app->get('/([a-z0-9_-]+)/', function ($category) use($app, $orm) {
 
-        $rows = $orm->posts()->count('postID');
-        $paginate->records($rows);
-        $paginate->records_per_page($records_per_page);
+    $records_per_page = $app->hook->get_option('num_posts');
+    $paginate = new \app\src\Paginate();
 
-        $posts = $orm->posts();
-        $select = $posts->select('posts.post_title,posts.post_content')
-            ->select('posts.post_date,posts.post_slug')
-            ->select('cat.catSlug,cat.catName')
-            ->_join('categories', 'posts.catID = cat.catID', 'cat')
-            ->where('cat.catSlug = ?', $category)
-            ->_and_()
-            ->where('posts.post_status = "publish"')
-            ->_and_()
-            ->where('posts.post_date <= ?', $orm->NOW())
-            ->orderBy('posts.post_date', 'DESC')
-            ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
-        $q = $select->find(function($data) {
-            $array = [];
-            foreach ($data as $d) {
-                $array[] = $d;
-            }
-            return $array;
-        });
-        foreach ($q as $r) {
-            $title = $r['catName'];
-        }
+    $rows = $orm->posts()->count('postID');
+    $paginate->records($rows);
+    $paginate->records_per_page($records_per_page);
 
-        /**
-         * If the category doesn't exist, then it
-         * is false and a 404 page should be displayed.
-         */
-        if ($q === false) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    $posts = $orm->posts();
+    $select = $posts->select('posts.post_title,posts.post_content')
+        ->select('posts.post_date,posts.post_slug')
+        ->select('cat.catSlug,cat.catName')
+        ->_join('categories', 'posts.catID = cat.catID', 'cat')
+        ->where('cat.catSlug = ?', $category)
+        ->_and_()
+        ->where('posts.post_status = "publish"')
+        ->_and_()
+        ->where('posts.post_date <= ?', $orm->NOW())
+        ->orderBy('posts.post_date', 'DESC')
+        ->limit(($paginate->get_pages() - $paginate->get_page()) * $records_per_page . ', ' . $records_per_page);
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
         }
-        /**
-         * If the query is legit, but the
-         * the category does not exist, then a 404
-         * page should be displayed
-         */ elseif (empty($q) === true) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
-        }
-        /**
-         * If we get to this point, then all is well
-         * and it is ok to process the query and print
-         * the results in a html format.
-         */ else {
-            $app->view->display('index/category', [ 'postscat' => $q, 'title' => $title, 'page' => $paginate]);
-        }
+        return $array;
     });
+    foreach ($q as $r) {
+        $title = $r['catName'];
+    }
 
     /**
-     * Retrieves a single post and includes the category
-     * for which it belongs.
+     * If the category doesn't exist, then it
+     * is false and a 404 page should be displayed.
      */
-    $app->get('/([a-z0-9_-]+)/([a-z0-9_-]+)/', function ($category, $single) use($app, $orm) {
+    if ($q === false) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If the query is legit, but the
+     * the category does not exist, then a 404
+     * page should be displayed
+     */ elseif (empty($q) === true) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If we get to this point, then all is well
+     * and it is ok to process the query and print
+     * the results in a html format.
+     */ else {
+        $app->view->display('index/category', [ 'postscat' => $q, 'title' => $title, 'page' => $paginate]);
+    }
+});
 
-        $post = $orm->posts();
-        $select = $post->select('posts.post_title,posts.post_content')
-            ->select('posts.post_date,posts.post_slug')
-            ->select('cat.catSlug,cat.catName')
-            ->_join('categories', 'posts.catID = cat.catID', 'cat')
-            ->where('cat.catSlug = ?', $category)
-            ->_and_()
-            ->where('posts.post_slug = ?', $single)
-            ->_and_()
-            ->where('posts.post_status = "publish"')
-            ->_and_()
-            ->where('posts.post_date <= ?', $orm->NOW());
-        $q = $select->find(function($data) {
-            $array = [];
-            foreach ($data as $d) {
-                $array[] = $d;
-            }
-            return $array;
-        });
-        foreach ($q as $r) {
-            $title = $r['post_title'];
-        }
+/**
+ * Retrieves a single post and includes the category
+ * for which it belongs.
+ */
+$app->get('/([a-z0-9_-]+)/([a-z0-9_-]+)/', function ($category, $single) use($app, $orm) {
 
-        /**
-         * If the category and post don't exist, then it
-         * is false and a 404 page should be displayed.
-         */
-        if ($q === false) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    $post = $orm->posts();
+    $select = $post->select('posts.post_title,posts.post_content')
+        ->select('posts.post_date,posts.post_slug')
+        ->select('cat.catSlug,cat.catName')
+        ->_join('categories', 'posts.catID = cat.catID', 'cat')
+        ->where('cat.catSlug = ?', $category)
+        ->_and_()
+        ->where('posts.post_slug = ?', $single)
+        ->_and_()
+        ->where('posts.post_status = "publish"')
+        ->_and_()
+        ->where('posts.post_date <= ?', $orm->NOW());
+    $q = $select->find(function($data) {
+        $array = [];
+        foreach ($data as $d) {
+            $array[] = $d;
         }
-        /**
-         * If the query is legit, but the
-         * category and post don't exist, then a 404
-         * page should be displayed.
-         */ elseif (empty($q) === true) {
-            $app->res->_format('html', 404);
-            $app->view->display('error/404', [ 'title' => '404 Not Found']);
-        }
-        /**
-         * If we get to this point, then all is well
-         * and it is ok to process the query and print
-         * the results in a html format.
-         */ else {
-            $app->view->display('index/post', [ 'post' => $q, 'title' => $title]);
-        }
+        return $array;
     });
+    foreach ($q as $r) {
+        $title = $r['post_title'];
+    }
+
+    /**
+     * If the category and post don't exist, then it
+     * is false and a 404 page should be displayed.
+     */
+    if ($q === false) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If the query is legit, but the
+     * category and post don't exist, then a 404
+     * page should be displayed.
+     */ elseif (empty($q) === true) {
+        $app->res->_format('html', 404);
+        $app->view->display('error/404', [ 'title' => '404 Not Found']);
+    }
+    /**
+     * If we get to this point, then all is well
+     * and it is ok to process the query and print
+     * the results in a html format.
+     */ else {
+        $app->view->display('index/post', [ 'post' => $q, 'title' => $title]);
+    }
 });
